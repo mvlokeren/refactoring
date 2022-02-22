@@ -12,6 +12,7 @@ class TriviaGame {
     private static TriviaGame game;
     private ArrayList<Question> questions;
     private Random rand;
+    Scanner in;
     private int userScore = 0;
     private int compScore = 0;
 
@@ -33,7 +34,7 @@ class TriviaGame {
     }
 
     private ArrayList<Question> loadQuestions() {
-        questions = questions = new ArrayList<Question>();
+        questions = new ArrayList<Question>();
 
         try {
             File file = new File(FILE_NAME);
@@ -58,11 +59,7 @@ class TriviaGame {
     }
 
     private boolean getBool(String data) {
-        if (data.equalsIgnoreCase("true")) {
-            return true;
-        }
-
-        return false;
+        return data.equalsIgnoreCase("true");
     }
 
     /**
@@ -71,6 +68,7 @@ class TriviaGame {
      */
     public void play() {
         System.out.println("Welcome to our Trivia Game");
+        in = new Scanner(System.in);
 
         while (true) {
             if (playRound() == 1) {
@@ -83,8 +81,8 @@ class TriviaGame {
                 break;
             }
         }
-
         displayStats();
+        in.close();
     }
 
     private void displayStats() {
@@ -102,7 +100,6 @@ class TriviaGame {
      * Will increment the score if the user wins.
      */
     private int playRound() {
-        Scanner in = new Scanner(System.in);
 
         int questionNum = rand.nextInt(questions.size());
         Question question = questions.get(questionNum);
@@ -121,9 +118,8 @@ class TriviaGame {
     }
 
     private boolean playAgain() {
-        Scanner in = new Scanner(System.in);
 
-        if (questions.size() == 0) {
+        if (questions.isEmpty()) {
             System.out.println("Game Over! You answered all the questions");
             return false;
         }
@@ -131,11 +127,7 @@ class TriviaGame {
         System.out.print("Do you want to play again, (Y)es or (N)o: ");
         String contInput = in.nextLine().trim().toLowerCase();
 
-        if (contInput.equals("y") || contInput.equals("yes")) {
-            return true;
-        } else {
-            return false;
-        }
+        return contInput.equals("y") || contInput.equals("yes");
     }
 
     public static void main(String[] args) {
