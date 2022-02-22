@@ -1,28 +1,42 @@
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.Scanner;
+import java.util.ArrayList;
 import java.util.Random;
 
 /**
  * Holds all the information and logic for a True/False Trivia Game
  */
 class TriviaGame {
-    private String[][] questions = new String[20][2];
-    private int count = 0;
+    private static final String FILE_NAME = "questions.txt";
+    private static TriviaGame game;
+    private ArrayList<Question> questions;
     private Random rand;
-    private int score = 0;
-    private boolean playAgain = true;
-    private Score myScore = new Score(0, 0, 0);
+    private int userScore = 0;
+    private int compScore = 0;
 
     /**
      * Creates a new Trivia Game
      * Loads all the question Data
      */
-    public TriviaGame() {
+    private TriviaGame() {
         rand = new Random();
+        questions = loadQuestions();
+    }
+
+    public static TriviaGame getInstance() {
+        if (game == null) {
+            game = new TriviaGame();
+        }
+
+        return game;
+    }
+
+    private ArrayList<Question> loadQuestions() {
+        questions = questions = new ArrayList<Question>();
 
         try {
-            File file = new File("questions.txt");
+            File file = new File(FILE_NAME);
             Scanner scanner = new Scanner(file);
 
             // loop through to get each question
@@ -30,9 +44,7 @@ class TriviaGame {
                 String[] data = scanner.nextLine().split(",");
                 String question = data[0].trim();
                 String answer = data[1].trim().toLowerCase();
-                questions[count][0] = question;
-                questions[count][1] = answer;
-                count++;
+                questions.add(new Question(question, getBool(answer)));
             }
             scanner.close();
         } catch (FileNotFoundException e) {
@@ -41,6 +53,16 @@ class TriviaGame {
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+        return questions;
+    }
+
+    private boolean getBool(String data) {
+        if (data.equalsIgnoreCase("true")) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -50,15 +72,28 @@ class TriviaGame {
     public void play() {
         System.out.println("Welcome to our Trivia Game");
 
-        while (playAgain == true) {
-            playRound();
+        while (true) {
+            if (playRound() == 1) {
+                userScore++;
+            } else {
+                compScore++;
+            }
+
+            if (!playAgain()) {
+                break;
+            }
         }
 
+        displayStats();
+    }
+
+    private void displayStats() {
         System.out.println("Goodbye");
+        int totalGames = userScore + compScore;
         System.out.println(
-                "You got " + myScore.getUserScore() + " out of " + myScore.getTotalGames() + " questions right.");
+                "You got " + userScore + " out of " + totalGames + " questions right.");
         System.out.println(
-                "Comp got " + myScore.getCompScore() + " out of " + myScore.getTotalGames() + " questions right.");
+                "Comp got " + compScore + " out of " + totalGames + " questions right.");
     }
 
     /**
@@ -66,69 +101,45 @@ class TriviaGame {
      * Each time a question is presented we ensure the question is not asked again
      * Will increment the score if the user wins.
      */
-    public void playRound() {
+    private int playRound() {
         Scanner in = new Scanner(System.in);
 
-        int questionNum = rand.nextInt(questions.length);
-        System.out.println(questions[questionNum][0]);
+        int questionNum = rand.nextInt(questions.size());
+        Question question = questions.get(questionNum);
+        System.out.println(question.getQuestion());
         System.out.print("Enter answer, True or False: ");
-        String userAns = in.nextLine().trim().toLowerCase();
+        boolean userAns = getBool(in.nextLine().trim().toLowerCase());
+        questions.remove(questionNum);
 
-        if (userAns.equals(questions[questionNum][1])) {
+        if (question.isCorrect(userAns)) {
             System.out.println("Yay you got it!");
-            int prevScore = myScore.getUserScore();
-            myScore.setUserScore(prevScore + 1);
-            int numGames = myScore.getTotalGames();
-            myScore.setTotalGames(numGames + 1);
+            return 1;
         } else {
             System.out.println("Sorry that was incorrect.");
-            int prevScore = myScore.getCompScore();
-            myScore.setCompScore(prevScore + 1);
-            int numGames = myScore.getTotalGames();
-            myScore.setTotalGames(numGames + 1);
+            return -1;
         }
-        removeItemFromList(questionNum);
+    }
 
-        if (count == 0) {
+    private boolean playAgain() {
+        Scanner in = new Scanner(System.in);
+
+        if (questions.size() == 0) {
             System.out.println("Game Over! You answered all the questions");
-            playAgain = false;
-            return;
+            return false;
         }
 
         System.out.print("Do you want to play again, (Y)es or (N)o: ");
         String contInput = in.nextLine().trim().toLowerCase();
 
         if (contInput.equals("y") || contInput.equals("yes")) {
-            playAgain = true;
+            return true;
         } else {
-            playAgain = false;
+            return false;
         }
-    }
-
-    /**
-     * Will remove the given index from the two dimensional qeustion array
-     * 
-     * @param questNumber The index to remove
-     */
-    public void removeItemFromList(int questNumber) {
-        String[][] temp = new String[count - 1][2];
-
-        // copy items over except questNumber
-        int index = 0;
-        for (int i = 0; i < questions.length; i++) {
-
-            if (i != questNumber) {
-                temp[index][0] = questions[i][0];
-                temp[index][1] = questions[i][1];
-                index++;
-            }
-        }
-        questions = temp;
-        count = questions.length;
     }
 
     public static void main(String[] args) {
-        TriviaGame game = new TriviaGame();
+        TriviaGame game = TriviaGame.getInstance();
         game.play();
     }
 }
