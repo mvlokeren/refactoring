@@ -50,7 +50,7 @@ class TriviaGame {
     public void play() {
         System.out.println("Welcome to our Trivia Game");
 
-        while (playAgain == true) {
+        while (playAgain) {
             playRound();
         }
 
